@@ -1,0 +1,59 @@
+1. The real-world dimensions are from 107d46’38.27”E to 107d51’41.55”E and 15d18’40.48”N to 15d22’37.35”N (((107d46'41.35"E, 15d22'37.35"N), (107d51'41.55"E, 15d22'33.55"N), (107d51'38.38"E, 15d18'40.48"N), (107d46'38.27"E, 15d18'44.26"N))
+Corner Coordinates:
+Upper Left  (  798243.562, 1701947.684) (107d46'41.35"E, 15d22'37.35"N)
+Lower Left  (  798243.562, 1694777.684) (107d46'38.27"E, 15d18'44.26"N)
+Upper Right (  807203.562, 1701947.684) (107d51'41.55"E, 15d22'33.55"N)
+Lower Right (  807203.562, 1694777.684) (107d51'38.38"E, 15d18'40.48"N)
+Center      (  802723.562, 1698362.684) (107d49' 9.89"E, 15d20'38.92"N)
+
+
+2. 1792, 1434 at 100 pixels per cm
+17.92cm x 14.34cm
+Pixel size 5m
+5*100m in each cm
+500m in each cm
+
+
+3. echo off
+rem Purpose: writes gdalinfo of independence.dem to
+rem          output.txt, reprojects to NAD83, and saves
+rem                         to new file
+
+rem get gdalinfo and write results to output.txt
+gdalinfo independence.dem>output.txt
+
+rem reproject to NAD83
+rem cannot write to .dem so write to .tif
+gdalwarp -t_srs "NAD83" independence.dem independence--NAD83.tif
+rem convert .tif to .dem
+gdal_translate independence--NAD83.tif independence--NAD83.dem
+
+
+4. echo off
+rem Purpose: create shaded relief map with vertical
+rem                  exaggeration of 2
+gdaldem hillshade -z 2 independence--NAD83.dem independence--NAD83Shade.tif
+
+
+5. echo off
+rem Purpose: create contour map with 10 meter
+rem                  contour interval
+gdal_contour -a elev independence--NAD83.dem independence--NAD83contour.shp -i 10.0
+
+
+6. ogrinfo -so bldg_clip_dist.shp bldg_clip_dist
+Extent: (790923.270307, 869950.682382) - (825239.799771, 905872.155487)
+The real-world dimensions are from 790,923.270307 feet to 825,239.799771 feet east-west and from 869,950.682382 feet to 905,872.155487 feet north-south. The place on Earth can be determined because the coordinate system, latitude of origin, and central meridian are also included in the data.
+
+
+7. echo off
+rem Purpose: counts the number of land use categories in lulc_clip_dist
+ 
+ogrinfo -sql "select count(distinct lu) from lulc_clip_dist" lulc_clip_dist.shp
+41 categories
+
+
+8. echo off
+rem Purpose: given an input shapefile, convert to kml
+
+ogr2ogr -f "KML" %1.kml %1
